@@ -19,14 +19,38 @@ def load_obj(name):
     with open('obj/' + name + '.pkl', 'rb') as f:
         return pickle.load(f)
 
+def send_maker_event(event, value1=None, value2=None, value3=None):
+    try:
+        response = requests.get(
+            url="https://maker.ifttt.com/trigger/{event}/with/key/{api_key}".format(
+                event=event,
+                api_key=os.environ['MAKER_API_KEY']
+            ),
+            params={
+                "value1": value1,
+                "value2": value2,
+                "value3": value3,
+            },
+        )
+        print('sent {event} ({value1}, {value2}, {value3}) {status_code}'.format(
+            event=event,
+            value1=value1,
+            value2=value2,
+            value3=value3,
+            status_code=response.status_code
+        ))
+    except requests.exceptions.RequestException:
+        print('Maker HTTP Request failed')
+
 def notify_new_grade(module):
-    pass
+    send_maker_event("ent_new_grade", module['module_name'], module['module_grade'])
 
 def notify_deleted_grade(module):
-    pass
+    send_maker_event("ent_deleted_grade", module['module_name'])
 
 def notify_edited_grade(oldmodule, newmodule):
-    pass
+    send_maker_event("ent_edited_grade", newmodule['module_name'], 
+        oldmodule['module_grade'], newmodule['module_grade'])
 
 def main():
     s = requests.Session()
@@ -34,6 +58,10 @@ def main():
 
     if not "ENT_USERNAME" in os.environ or not "ENT_PASSWORD" in os.environ:
         print("error: set your credentials in the ENT_USERNAME and ENT_PASSWORD environment variables")
+        sys.exit(1)
+
+    if not "MAKER_API_KEY" in os.environ:
+        print("error: set your Maker API key in the MAKER_API_KEY environment variable")
         sys.exit(1)
 
     entlogin.auth(s, os.environ['ENT_USERNAME'], os.environ['ENT_PASSWORD'])
@@ -49,7 +77,7 @@ def main():
 
         # Analyze differences between the grades we fetched and the ones that
         # we fetched last time
-        for year, modules in grades:
+        for year, modules in grades.items():
             if oldyears[year]:
                 # For each module in the new list, compare to the old modules
                 for module in modules:

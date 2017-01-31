@@ -2,6 +2,7 @@
 import requests
 import re
 import urllib
+from bs4 import BeautifulSoup, SoupStrainer
 
 ROOT_URL = "https://ent.normandie-univ.fr"
 DOSSIER_URL = ROOT_URL + "/uPortal/f/u1240l1s214/p/esup-mondossierweb2.u1240l1n131/max/action.uP"
@@ -72,7 +73,7 @@ def get_grades_step_3(session, year):
     return response.text
 
 def get_grades(session):
-    """Fetches all of the grades for the authenticated user.""" 
+    """Fetches all of the grades for the authenticated user for the given session.""" 
     res = get_grades_step_0(session)
     dossier_path = re.search('href="([\/a-zA-Z0-9\.]*)" title="Mon dossier"', res).group(1)
 
@@ -96,7 +97,43 @@ def get_grades(session):
 
     print("[STEP 2] got years:", years)
 
-    #for year in years:
-    res = get_grades_step_3(session, years[0])
+    year_grades = []
+    for year in years:
+        res = get_grades_step_3(session, year)
 
-    print(res)
+        soup = BeautifulSoup(res, 'html.parser')
+        table = soup.find('table', attrs={'class':'portlet-table'})
+        table_body = table.find('tbody')
+        rows = table_body.find_all('tr')
+
+        rawgrades = []
+        for row in rows:
+            cols = row.find_all('td')
+            cols = [ele.text.strip() for ele in cols]
+
+            data = []
+            for ele in cols:
+                if ele:
+                    data.append(ele)
+
+            rawgrades.append(data)
+
+        grades = []
+        gradergx = re.compile('^[0-9]{1,2}$')
+        for line in rawgrades:
+            if len(line) == 3 and gradergx.match(line[2]):
+                grades.append({
+                    "module_code": line[0],
+                    "module_name": line[1],
+                    "module_grade": int(line[2])
+                })
+
+        print("[STEP 3] got {nb} modules with grades for year {year}".format(nb=len(grades), year=year['name']))
+
+        year_grades.append({
+            'year':{'id': year['id'], 'label': year['name']}, 
+            'grades': grades, 
+            'raw': rawgrades
+        })
+
+    return year_grades

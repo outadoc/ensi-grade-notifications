@@ -77,6 +77,7 @@ def auth_step_3(session, relay_state, samlresponse):
         status_code=response.status_code))
 
 def auth(session, username, password):
+    """Authenticates the user in the given session."""
     # AUTH REQ #0
     res = auth_step_0(session)
     targetenc = re.search('action="(.*)"', res).group(1)
@@ -84,7 +85,7 @@ def auth(session, username, password):
     cookieid = re.search('target=(.*)', targetdec).group(1)
 
     print("[STEP 0] got cookieid: " + cookieid)
-    
+
     # AUTH REQ #1
     res = auth_step_1(session, cookieid)
 

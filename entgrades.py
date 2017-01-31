@@ -3,26 +3,32 @@ import requests
 import re
 import urllib
 
-DOSSIER_URL = "https://ent.normandie-univ.fr/uPortal/f/u1240l1s214/p/esup-mondossierweb2.u1240l1n131/max/action.uP"
+ROOT_URL = "https://ent.normandie-univ.fr"
+DOSSIER_URL = ROOT_URL + "/uPortal/f/u1240l1s214/p/esup-mondossierweb2.u1240l1n131/max/action.uP"
 
 def get_grades_step_0(session):
-    # GET https://ent.normandie-univ.fr/
+    """Fetches the homepage."""
     response = session.get(
-        url="https://ent.normandie-univ.fr/"
+        url=ROOT_URL
     )
     print('[STEP 0] Status Code: {status_code}'.format(
         status_code=response.status_code))
     return response.text
 
 def get_grades_step_1(session, page):
+    """Fetches the 'dossier' page.
+    Params:
+    page -- the path of the 'dossier' page
+    """
     response = session.get(
-        url="https://ent.normandie-univ.fr/" + page
+        url=ROOT_URL + page
     )
     print('[STEP 1] Status Code: {status_code}'.format(
         status_code=response.status_code))
     return response.text
 
 def get_grades_step_2(session):
+    """Fetches the page with the list of years and links to the results pages."""
     response = session.post(
         url=DOSSIER_URL,
         params={
@@ -42,6 +48,10 @@ def get_grades_step_2(session):
     return response.text
 
 def get_grades_step_3(session, year):
+    """Fetches the page with the results for the specified year.
+    Params:
+    year -- a custom object with JSF ids 'n' stuff
+    """
     response = session.post(
         url=DOSSIER_URL,
         params={
@@ -62,6 +72,7 @@ def get_grades_step_3(session, year):
     return response.text
 
 def get_grades(session):
+    """Fetches all of the grades for the authenticated user.""" 
     res = get_grades_step_0(session)
     dossier_path = re.search('href="([\/a-zA-Z0-9\.]*)" title="Mon dossier"', res).group(1)
 
@@ -82,9 +93,9 @@ def get_grades(session):
             "paramval": match.group(5),
             "row": match.group(4)
         })
-    
+
     print("[STEP 2] got years:", years)
-    
+
     #for year in years:
     res = get_grades_step_3(session, years[0])
 

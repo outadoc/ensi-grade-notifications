@@ -128,11 +128,12 @@ def get_grades(session):
                     "module_grade": int(line[2])
                 })
 
-        print("[STEP 3] got {nb} modules with grades for year {year}".format(nb=len(grades), year=year['name']))
+        print("[STEP 3] got {nb} modules with grades for year {year}".format(
+            nb=len(grades), year=year['name']))
 
         year_grades.append({
-            'year':{'id': year['id'], 'label': year['name']}, 
-            'grades': grades, 
+            'year':{'id': year['id'], 'label': year['name']},
+            'grades': grades,
             'raw': rawgrades
         })
 

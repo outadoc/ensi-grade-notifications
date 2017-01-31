@@ -83,7 +83,7 @@ def get_grades(session):
 
     # Get the list of years available (1A, 2A, 3A) and their identifiers
     res = get_grades_step_2(session)
-    rgx = re.finditer('''<u>([A-Z\/0-9]*)<\/u><\/a><\/td><td width="30%"><a href="#" onclick="return oamSubmitForm\('([a-zA-Z0-9_]*)','([a-zA-Z0-9_:]*)',null,\[\['row','([0-9]*)'\]\]\);" id="([a-zA-Z0-9_:]*)">([a-zA-Z0-9 ]*)<\/a>''', res)
+    rgx = re.finditer(r'''<u>([A-Z\/0-9]*)<\/u><\/a><\/td><td width="30%"><a href="#" onclick="return oamSubmitForm\('([a-zA-Z0-9_]*)','([a-zA-Z0-9_:]*)',null,\[\['row','([0-9]*)'\]\]\);" id="([a-zA-Z0-9_:]*)">([a-zA-Z0-9 ]*)<\/a>''', res)
 
     years = []
     for match in rgx:

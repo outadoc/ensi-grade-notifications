@@ -12,11 +12,13 @@ import entgrades
 FILE_NAME = 'last_grades'
 
 def save_obj(obj, name):
-    with open('obj/'+ name + '.pkl', 'wb') as f:
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    with open(dir_path + '/obj/'+ name + '.pkl', 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 def load_obj(name):
-    with open('obj/' + name + '.pkl', 'rb') as f:
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    with open(dir_path + '/obj/' + name + '.pkl', 'rb') as f:
         return pickle.load(f)
 
 def send_maker_event(event, value1=None, value2=None, value3=None):

@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""This module fetches your grades from the ENT and notifies you accordingly.
+The system uses Maker to send notifications, so you can use IFTTT to create
+creative applets!
+"""
+
 import pprint
 import pickle
 import os
@@ -66,7 +71,7 @@ def main():
         print("error: set your Maker API key in the MAKER_API_KEY environment variable")
         sys.exit(1)
 
-    entlogin.auth(s, os.environ['ENT_USERNAME'], os.environ['ENT_PASSWORD'])
+    entlogin.authenticate(s, os.environ['ENT_USERNAME'], os.environ['ENT_PASSWORD'])
     res = entgrades.get_grades(s)
 
     # Copy data to a nicer dictionary

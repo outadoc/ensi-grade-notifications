@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-import requests
+"""This module fetches the grades of the logged in user.
+You will probably want to use this along with entlogin. Don't forget to log in
+using the other module, and just pass the same session to this module.
+"""
+
 import re
-import urllib
-from bs4 import BeautifulSoup, SoupStrainer
+from bs4 import BeautifulSoup
 
 ROOT_URL = "https://ent.normandie-univ.fr"
 DOSSIER_URL = ROOT_URL + "/uPortal/f/u1240l1s214/p/esup-mondossierweb2.u1240l1n131/max/action.uP"
 
-def get_grades_step_0(session):
+def _get_grades_step_0(session):
     """Fetches the homepage."""
     response = session.get(
         url=ROOT_URL
@@ -16,7 +19,7 @@ def get_grades_step_0(session):
         status_code=response.status_code))
     return response.text
 
-def get_grades_step_1(session, page):
+def _get_grades_step_1(session, page):
     """Fetches the 'dossier' page.
     Params:
     page -- the path of the 'dossier' page
@@ -28,7 +31,7 @@ def get_grades_step_1(session, page):
         status_code=response.status_code))
     return response.text
 
-def get_grades_step_2(session):
+def _get_grades_step_2(session):
     """Fetches the page with the list of years and links to the results pages."""
     response = session.post(
         url=DOSSIER_URL,
@@ -48,7 +51,7 @@ def get_grades_step_2(session):
         status_code=response.status_code))
     return response.text
 
-def get_grades_step_3(session, year):
+def _get_grades_step_3(session, year):
     """Fetches the page with the results for the specified year.
     Params:
     year -- a custom object with JSF ids 'n' stuff
@@ -74,15 +77,15 @@ def get_grades_step_3(session, year):
 
 def get_grades(session):
     """Fetches all of the grades for the authenticated user for the given session.""" 
-    res = get_grades_step_0(session)
+    res = _get_grades_step_0(session)
     dossier_path = re.search('href="([\/a-zA-Z0-9\.]*)" title="Mon dossier"', res).group(1)
 
     print("[STEP 0] got dossier path: " + dossier_path)
 
-    res = get_grades_step_1(session, dossier_path)
+    res = _get_grades_step_1(session, dossier_path)
 
     # Get the list of years available (1A, 2A, 3A) and their identifiers
-    res = get_grades_step_2(session)
+    res = _get_grades_step_2(session)
     rgx = re.finditer(r'''<u>([A-Z\/0-9]*)<\/u><\/a><\/td><td width="30%"><a href="#" onclick="return oamSubmitForm\('([a-zA-Z0-9_]*)','([a-zA-Z0-9_:]*)',null,\[\['row','([0-9]*)'\]\]\);" id="([a-zA-Z0-9_:]*)">([a-zA-Z0-9 ]*)<\/a>''', res)
 
     years = []
@@ -99,7 +102,7 @@ def get_grades(session):
 
     year_grades = []
     for year in years:
-        res = get_grades_step_3(session, year)
+        res = _get_grades_step_3(session, year)
 
         soup = BeautifulSoup(res, 'html.parser')
         table = soup.find('table', attrs={'class':'portlet-table'})

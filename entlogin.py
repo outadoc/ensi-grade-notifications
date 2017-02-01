@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-import requests
+"""This module logs the specified ENSICAEN user into the ENT."""
+
 import re
 import urllib
 
-def auth_step_0(session):
+def _auth_step_0(session):
     # POST http:// ent.normandie-univ.fr
     response = session.post(
         url="http://ent.normandie-univ.fr",
@@ -16,7 +17,7 @@ def auth_step_0(session):
     print('[STEP 0] {nbreq} requests'.format(nbreq=len(response.history)))
     return response.text
 
-def auth_step_1(session, cookieid):
+def _auth_step_1(session, cookieid):
     # POST http://wayf.normandie-univ.fr/WAYF.php
     response = session.post(
         url="http://wayf.normandie-univ.fr/WAYF.php",
@@ -36,7 +37,7 @@ def auth_step_1(session, cookieid):
     print('[STEP 1] {nbreq} requests'.format(nbreq=len(response.history)))
     return response.text
 
-def auth_step_2(username, password, session, auth_token, jsessionid):
+def _auth_step_2(username, password, session, auth_token, jsessionid):
     # POST https://cas.ensicaen.fr/cas/login
     response = session.post(
         url="https://cas.ensicaen.fr/cas/login;jsessionid={jsessionid}".format(
@@ -60,7 +61,7 @@ def auth_step_2(username, password, session, auth_token, jsessionid):
         status_code=response.status_code))
     return response.text
 
-def auth_step_3(session, relay_state, samlresponse):
+def _auth_step_3(session, relay_state, samlresponse):
     # POST https://ent.normandie-univ.fr/Shibboleth.sso/SAML2/POST
     response = session.post(
         url="https://ent.normandie-univ.fr/Shibboleth.sso/SAML2/POST",
@@ -76,10 +77,10 @@ def auth_step_3(session, relay_state, samlresponse):
     print('[STEP 3] Status Code: {status_code}'.format(
         status_code=response.status_code))
 
-def auth(session, username, password):
+def authenticate(session, username, password):
     """Authenticates the user in the given session."""
     # AUTH REQ #0
-    res = auth_step_0(session)
+    res = _auth_step_0(session)
     targetenc = re.search('action="(.*)"', res).group(1)
     targetdec = urllib.parse.unquote(urllib.parse.unquote(targetenc))
     cookieid = re.search('target=(.*)', targetdec).group(1)
@@ -87,7 +88,7 @@ def auth(session, username, password):
     print("[STEP 0] got cookieid: " + cookieid)
 
     # AUTH REQ #1
-    res = auth_step_1(session, cookieid)
+    res = _auth_step_1(session, cookieid)
 
     lt = re.search('name="lt" value="(.*)"', res).group(1)
     jsessionid = session.cookies.get("JSESSIONID")
@@ -96,10 +97,10 @@ def auth(session, username, password):
     print("[STEP 1] got jsessionid: " + jsessionid)
 
     # AUTH REQ #2
-    res = auth_step_2(username, password, session, lt, jsessionid)
+    res = _auth_step_2(username, password, session, lt, jsessionid)
     saml = re.search('name="SAMLResponse" value="(.*)"', res).group(1)
     print("[STEP 2] got samlresponse of {saml_len} B".format(saml_len=len(saml)))
 
     # AUTH REQ #3
-    auth_step_3(session, cookieid, saml)
+    _auth_step_3(session, cookieid, saml)
     print("[STEP 3] Authenticated!")
